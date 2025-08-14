@@ -5,3 +5,4 @@ CMakeFiles/
 Makefile
 lists/
 compile_commands.json
+.cache/
