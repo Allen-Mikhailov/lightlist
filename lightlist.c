@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include "cjson/cJSON.h"
 #include <dirent.h> 
+#include <ncurses.h>
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
@@ -41,7 +42,7 @@ TextMenuButton* create_text_menu_button(char* text, int id, void (*onclick) (int
 
 	// Assuming text gets cleared when we close
 	char *text2 = malloc(strlen(text)+1);
-	strcpy(name, text);
+	strcpy(text2, text);
 	button->text = text2;
 
 	return button;
@@ -93,7 +94,7 @@ void set_print_color(C3 *color)
 	writeNumCharToStr(COLOR_STR+7,  MIN(color->r, 255));
 	writeNumCharToStr(COLOR_STR+11, MIN(color->g, 255));
 	writeNumCharToStr(COLOR_STR+15, MIN(color->b, 255));
-	printf("%s", COLOR_STR);
+	printw("%s", COLOR_STR);
 }
 
 
@@ -106,9 +107,12 @@ void print_text_menu(TextMenu* menu)
 		int item_type = *( (int*) menu_item );
 		switch(item_type)
 		{
-			case TEXT_MENU_BUTTON_TYPE:
+			case TEXT_MENU_BUTTON_TYPE:;
 				TextMenuButton *button = (TextMenuButton*) menu_item;
-				printf("%s\n", button->text);
+				if (menu->hovered_item == i)
+					printw(" - ");
+
+				printw("%s\n", button->text);
 				break;
 		}
 	}
@@ -121,6 +125,12 @@ void sleep_ms(int milliseconds)
     usleep(milliseconds * 1000);
 }
 
+void clear_screen()
+{
+	// printw("\033[0;0H");
+	printw("\033[H\033[2J");
+}
+
 char **read_directory(char *path)
 {
 	DIR *d;
@@ -131,7 +141,7 @@ char **read_directory(char *path)
 	d = opendir(".");
 	if (d) {
 		while ((dir = readdir(d)) != NULL) {
-			printf("%s\n", dir->d_name);
+			printw("%s\n", dir->d_name);
 			count++;
 		}
 		closedir(d);
@@ -142,7 +152,7 @@ char **read_directory(char *path)
 	d = opendir(".");
 	if (d) {
 		while ((dir = readdir(d)) != NULL) {
-			printf("%s\n", dir->d_name);
+			printw("%s\n", dir->d_name);
 			count++;
 		}
 		closedir(d);
@@ -160,7 +170,7 @@ char *read_text_file(char *path)
     FILE *file = fopen(path, "r");
 	if (file == NULL)
 	{
-		printf("Error reading file \"%s\"", path);
+		printw("Error reading file \"%s\"", path);
 		return NULL;
 	}
 	
@@ -173,7 +183,7 @@ char *read_text_file(char *path)
     char *str = malloc(file_size + 1);
 	if (str == NULL)
 	{
-		printf("Error allocating %ld bytes of memory for file allocation", file_size);
+		printw("Error allocating %ld bytes of memory for file allocation", file_size);
 		return NULL;
 	}
 
@@ -181,7 +191,7 @@ char *read_text_file(char *path)
 	size_t bytes_read = fread(str, 1, file_size, file);
     if (bytes_read != file_size) {
         // Handle error: not all bytes were read
-        fprintf(stderr, "Error reading file: expected %ld bytes, read %zu\n", file_size, bytes_read);
+        printw("Error reading file: expected %ld bytes, read %zu\n", file_size, bytes_read);
         free(str);
         fclose(file);
         return NULL;
@@ -201,18 +211,58 @@ void empty_menu_button(int id)
 
 void pick_list()
 {	
+	// Generating buttons for all the lists
 	DIR *d;
 	struct dirent *dir;
 
-	d = opendir(".");
+	d = opendir("./lists");
 	if (d) {
+		int i = 0;
 		while ((dir = readdir(d)) != NULL) {
-			add_text_menu_button(directory_menu, dir->dname, i, empty_menu_button);
+			add_text_menu_button(&directory_menu, dir->d_name, i, empty_menu_button);
+			i++;
 		}
 		closedir(d);
 	} else {
-		return NULL;
+		add_text_menu_button(&directory_menu, "Unable to open directory", 0, empty_menu_button);
 	}
+
+	// Control Loop
+	int frame = 0;
+	int last_input;
+	while (1)
+	{
+		erase();
+
+		// Rendering the list
+		print_text_menu(&directory_menu);
+		printw("Frame: %d\n", frame);
+		printw("%d\n", last_input);
+
+
+		// Writes to the screen
+		refresh();
+
+		// pause till input
+		last_input = getch();
+
+		// Handling input
+		switch (last_input)
+		{
+			case KEY_UP: ;
+				directory_menu.hovered_item = MAX(directory_menu.hovered_item-1, 0);
+				break;
+			case KEY_DOWN: ;
+				directory_menu.hovered_item = MIN(directory_menu.hovered_item+1, directory_menu.item_count-1);
+				break;
+
+
+
+		}
+
+		frame++;
+	}
+
 
 
 }
@@ -220,5 +270,10 @@ void pick_list()
 
 int main()
 {
+	initscr();
+	keypad(stdscr, TRUE);
+	pick_list();
+
+	endwin();
 	return 0;
 }

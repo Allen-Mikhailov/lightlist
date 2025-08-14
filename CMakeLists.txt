@@ -12,6 +12,11 @@ set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(lightlist lightlist.c cjson/cJSON.c)
 
+
+find_package(Curses REQUIRED)
+include_directories(${CURSES_INCLUDE_DIR})
+target_link_libraries(lightlist ${CURSES_LIBRARIES})
+
 target_compile_options(lightlist PUBLIC -march=native)
 target_compile_options(lightlist PUBLIC -ffast-math)
 
