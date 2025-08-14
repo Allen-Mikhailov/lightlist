@@ -10,7 +10,7 @@ project(lightlist)
 # for Debugging with prof
 set(CMAKE_BUILD_TYPE Debug)
 
-add_executable(lightlist lightlist.c)
+add_executable(lightlist lightlist.c cjson/cJSON.c)
 
 target_compile_options(lightlist PUBLIC -march=native)
 target_compile_options(lightlist PUBLIC -ffast-math)
