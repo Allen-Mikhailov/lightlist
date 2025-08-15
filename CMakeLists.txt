@@ -10,7 +10,7 @@ project(lightlist)
 # for Debugging with prof
 set(CMAKE_BUILD_TYPE Debug)
 
-add_executable(lightlist lightlist.c cjson/cJSON.c)
+add_executable(lightlist lightlist.c cjson/cJSON.c textmenu/textmenu.c)
 
 
 find_package(Curses REQUIRED)
