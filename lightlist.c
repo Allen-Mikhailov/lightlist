@@ -17,8 +17,9 @@ typedef struct Color3 {
         unsigned short b;
 } C3;
 
-
-
+int in_command = 0;
+int command_length = 0;
+char command_line_input[1000];
 
 
 void sleep_ms(int milliseconds)
@@ -72,6 +73,11 @@ char *read_text_file(char *path)
 void empty_menu_button(int id)
 { }
 
+void create_new_list_button(int id)
+{
+
+}
+
 // TODO: Make this call a function so we can free or something and shove in a function
 TextMenu directory_menu;
 
@@ -103,8 +109,11 @@ void pick_list()
 		}
 		closedir(d);
 	} else {
-		add_text_menu_button(&directory_menu, "Unable to open directory", 0, empty_menu_button);
+		add_text_menu_label(&directory_menu, "Unable to open directory");
 	}
+
+
+	add_text_menu_button(&directory_menu, "New List", 0, &create_new_list_button);
 
 	
 
@@ -129,21 +138,27 @@ void pick_list()
 		last_input = getch();
 
 		// Handling input
-		switch (last_input)
+		if (last_input == KEY_UP)
+			text_menu_move(&directory_menu, -1);
+
+		if (last_input == KEY_DOWN)
+			text_menu_move(&directory_menu, 1);
+
+		if (last_input == 27) // ESC Key
+			 exit = 1;
+
+		if (last_input == 10) // Enter Key
 		{
-			case KEY_UP: ;
-				text_menu_move(&directory_menu, -1);
-				break;
-			case KEY_DOWN: ;
-				text_menu_move(&directory_menu, 1);
-				break;
-			case 27: ; // ESC key
-				exit = 1;
-				break;
-
-
 
 		}
+
+		if (last_input >= 33 && last_input <= 126)
+		{
+			
+		}
+
+
+
 
 		frame++;
 	}
@@ -158,7 +173,10 @@ int main()
 {
 	initscr();
 	keypad(stdscr, TRUE);
-	
+	noecho();
+	// raw();
+	set_escdelay(25);	
+
 	if (start_color() != OK)
 		return 1;
 
